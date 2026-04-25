@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конструктор личного AI-агента</title>
+  <meta name="description" content="Одностраничный конструктор промпта для личного AI-агента.">
+  <meta name="theme-color" content="#17211f">
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #5b635d;
+      --paper: #faf7ed;
+      --panel: #fffdf7;
+      --line: #1f2a27;
+      --teal: #0f766e;
+      --mint: #b8f1cf;
+      --blue: #2457c5;
+      --red: #d84a32;
+      --yellow: #f2c94c;
+      --shadow: 9px 9px 0 rgba(23, 33, 31, 0.14);
+      --radius: 8px;
+      --font-display: Georgia, "Times New Roman", serif;
+      --font-body: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      background:
+        linear-gradient(rgba(23, 33, 31, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 33, 31, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 0 0, rgba(184, 241, 207, 0.55), transparent 280px),
+        linear-gradient(135deg, #faf7ed 0%, #eef8ef 44%, #f8efe8 100%);
+      background-size: 24px 24px, 24px 24px, auto, auto;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 34px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      color: var(--panel);
+      background: var(--ink);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 5px 5px 0 var(--yellow);
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .stage-badge {
+      justify-self: end;
+      display: grid;
+      gap: 4px;
+      min-width: 170px;
+      padding: 12px 14px;
+      color: var(--ink);
+      background: var(--mint);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 5px 5px 0 rgba(23, 33, 31, 0.18);
+      font-weight: 700;
+    }
+
+    .stage-badge span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.92fr) minmax(360px, 1.08fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 2px solid var(--line);
+      background: #fff6ce;
+    }
+
+    .panel-head.output-head {
+      background: #dff2ff;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.28rem;
+      line-height: 1.1;
+    }
+
+    .panel-code {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .preset-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset {
+      min-height: 42px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #f5efe2;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 3px 3px 0 rgba(23, 33, 31, 0.12);
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .preset:hover,
+    .preset:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 rgba(23, 33, 31, 0.18);
+      background: #dff5e6;
+      outline: none;
+    }
+
+    form {
+      display: grid;
+      gap: 15px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label,
+    .legend {
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      color: var(--ink);
+      background: #fffdf8;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      outline: none;
+      padding: 11px 12px;
+      box-shadow: inset 0 0 0 1px rgba(23, 33, 31, 0.03);
+      transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(36, 87, 197, 0.16);
+      background: #ffffff;
+    }
+
+    .task-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .style-option {
+      position: relative;
+    }
+
+    .style-option input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .style-option span {
+      display: grid;
+      min-height: 42px;
+      place-items: center;
+      padding: 8px 10px;
+      text-align: center;
+      background: #fffdf8;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 800;
+      transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .style-option input:checked + span {
+      color: #07130f;
+      background: var(--mint);
+      box-shadow: 3px 3px 0 rgba(23, 33, 31, 0.18);
+    }
+
+    .style-option input:focus-visible + span {
+      outline: 3px solid rgba(36, 87, 197, 0.24);
+      outline-offset: 2px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding-top: 3px;
+    }
+
+    .primary,
+    .secondary {
+      min-height: 48px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      font-weight: 900;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .primary {
+      color: #fffdf8;
+      background: var(--ink);
+      box-shadow: 5px 5px 0 var(--red);
+      padding: 12px 16px;
+    }
+
+    .primary:hover,
+    .primary:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 7px 7px 0 var(--red);
+      outline: none;
+    }
+
+    .secondary {
+      color: var(--ink);
+      background: #fffdf8;
+      box-shadow: 4px 4px 0 rgba(23, 33, 31, 0.12);
+      padding: 12px 14px;
+    }
+
+    .secondary:hover,
+    .secondary:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(23, 33, 31, 0.18);
+      background: #f6ffe8;
+      outline: none;
+    }
+
+    .output-panel {
+      position: sticky;
+      top: 18px;
+    }
+
+    .agent-strip {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 12px;
+      background:
+        linear-gradient(90deg, rgba(15, 118, 110, 0.13), rgba(36, 87, 197, 0.12)),
+        #fffdf8;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .agent-name {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .agent-domain {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .agent-tag {
+      min-width: 78px;
+      padding: 8px 10px;
+      text-align: center;
+      color: #fffdf8;
+      background: var(--teal);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      font-weight: 900;
+    }
+
+    .prompt-box {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prompt-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .meter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .meter span {
+      padding: 5px 8px;
+      background: #f0eadc;
+      border: 1px solid rgba(23, 33, 31, 0.18);
+      border-radius: 999px;
+    }
+
+    .copy {
+      min-height: 40px;
+      padding: 9px 13px;
+      color: var(--ink);
+      background: var(--yellow);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 4px 4px 0 rgba(23, 33, 31, 0.14);
+      font-weight: 900;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .copy:hover,
+    .copy:focus-visible {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(23, 33, 31, 0.18);
+      outline: none;
+    }
+
+    .generated {
+      min-height: 500px;
+      margin: 0;
+      padding: 16px;
+      color: #13211e;
+      background:
+        linear-gradient(rgba(23, 33, 31, 0.035) 1px, transparent 1px),
+        #fffdf8;
+      background-size: 100% 28px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 0.96rem;
+      box-shadow: inset 0 0 0 1px rgba(23, 33, 31, 0.05);
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 20;
+      max-width: min(340px, calc(100% - 40px));
+      padding: 12px 14px;
+      color: #fffdf8;
+      background: var(--ink);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 6px 6px 0 rgba(216, 74, 50, 0.8);
+      font-weight: 800;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .topbar,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-badge {
+        justify-self: start;
+      }
+
+      .output-panel {
+        position: static;
+      }
+
+      .generated {
+        min-height: 380px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        width: min(100% - 20px, 1180px);
+        padding-top: 14px;
+      }
+
+      .brand {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-mark {
+        width: 54px;
+        height: 54px;
+      }
+
+      h1 {
+        font-size: 2.15rem;
+        line-height: 1;
+      }
+
+      .panel-head,
+      .panel-body {
+        padding: 14px;
+      }
+
+      .preset-row,
+      .style-grid,
+      .actions,
+      .agent-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .prompt-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .copy,
+      .secondary {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">AI</div>
+        <div>
+          <h1>Конструктор личного AI-агента</h1>
+          <p class="subtitle">Собери роль, правила и формат ответа в один промпт, который можно сразу вставить в любой AI-чат.</p>
+        </div>
+      </div>
+
+      <div class="stage-badge">
+        <span>мастер-класс</span>
+        1 файл, 1 агент
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Конструктор промпта">
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Настройка</h2>
+          <span class="panel-code">agent.form</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="preset-row" aria-label="Быстрые заготовки">
+            <button class="preset" type="button" data-preset="content">Контент</button>
+            <button class="preset" type="button" data-preset="week">Неделя</button>
+            <button class="preset" type="button" data-preset="speech">Выступление</button>
+            <button class="preset" type="button" data-preset="study">Учёба</button>
+          </div>
+
+          <form id="agentForm">
+            <div class="field">
+              <label for="agentName">Имя агента</label>
+              <input id="agentName" name="agentName" type="text" value="Навигатор идей" autocomplete="off">
+            </div>
+
+            <div class="field">
+              <label for="domain">Сфера жизни</label>
+              <input id="domain" name="domain" type="text" value="личные проекты и развитие" autocomplete="off">
+            </div>
+
+            <div class="field">
+              <label for="goal">Главная цель</label>
+              <textarea id="goal" name="goal">Помогать мне быстро превращать размытые идеи в понятный план действий.</textarea>
+            </div>
+
+            <div class="field">
+              <div class="legend">3 задачи агента</div>
+              <div class="task-grid">
+                <input id="task1" name="task1" type="text" value="Задавать уточняющие вопросы, когда данных мало." autocomplete="off" aria-label="Задача 1">
+                <input id="task2" name="task2" type="text" value="Предлагать 3-5 практичных вариантов решения." autocomplete="off" aria-label="Задача 2">
+                <input id="task3" name="task3" type="text" value="Собирать итог в короткий список следующих шагов." autocomplete="off" aria-label="Задача 3">
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="legend">Стиль общения</div>
+              <div class="style-grid">
+                <label class="style-option">
+                  <input type="radio" name="tone" value="Дружелюбно, ясно, без давления." checked>
+                  <span>Дружелюбно</span>
+                </label>
+                <label class="style-option">
+                  <input type="radio" name="tone" value="Коротко, строго, только по делу.">
+                  <span>По делу</span>
+                </label>
+                <label class="style-option">
+                  <input type="radio" name="tone" value="Вдохновляюще, мягко, с поддержкой.">
+                  <span>Мягко</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="limits">Что агенту нельзя делать</label>
+              <textarea id="limits" name="limits">Не придумывать факты. Не давать слишком общие советы. Не писать длинно, если я не попросил.</textarea>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">Собрать агента</button>
+              <button class="secondary" type="button" id="clearButton">Очистить</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel output-panel" aria-live="polite">
+        <div class="panel-head output-head">
+          <h2 class="panel-title">Готовый промпт</h2>
+          <span class="panel-code">agent.prompt</span>
+        </div>
+
+        <div class="panel-body prompt-box">
+          <div class="agent-strip">
+            <div>
+              <h3 class="agent-name" id="previewName">Навигатор идей</h3>
+              <p class="agent-domain" id="previewDomain">личные проекты и развитие</p>
+            </div>
+            <div class="agent-tag" id="previewTag">AGENT</div>
+          </div>
+
+          <div class="prompt-toolbar">
+            <div class="meter" aria-label="Статистика промпта">
+              <span id="lineCount">0 строк</span>
+              <span id="charCount">0 знаков</span>
+            </div>
+            <button class="copy" type="button" id="copyButton">Копировать</button>
+          </div>
+
+          <pre class="generated" id="promptOutput"></pre>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status">Промпт скопирован</div>
+
+  <script>
+    const form = document.querySelector("#agentForm");
+    const output = document.querySelector("#promptOutput");
+    const copyButton = document.querySelector("#copyButton");
+    const clearButton = document.querySelector("#clearButton");
+    const toast = document.querySelector("#toast");
+    const previewName = document.querySelector("#previewName");
+    const previewDomain = document.querySelector("#previewDomain");
+    const previewTag = document.querySelector("#previewTag");
+    const lineCount = document.querySelector("#lineCount");
+    const charCount = document.querySelector("#charCount");
+    const presets = document.querySelectorAll("[data-preset]");
+
+    const presetData = {
+      content: {
+        agentName: "Редактор личного бренда",
+        domain: "контент, соцсети и публичные выступления",
+        goal: "Помогать мне находить сильные темы и превращать мысли в ясные посты, речи и заметки.",
+        task1: "Предлагать идеи под мою аудиторию и цель публикации.",
+        task2: "Структурировать текст: заголовок, крючок, основные мысли, финал.",
+        task3: "Редактировать текст так, чтобы он звучал живо и по-человечески.",
+        tone: "Дружелюбно, ясно, без давления.",
+        limits: "Не использовать канцелярит. Не делать текст пафосным. Не придумывать факты обо мне."
+      },
+      week: {
+        agentName: "Планировщик недели",
+        domain: "личная эффективность, дела и энергия",
+        goal: "Помогать мне выбирать главное на неделю и раскладывать дела без перегруза.",
+        task1: "Выделять 3 главных приоритета и объяснять, почему они важны.",
+        task2: "Собирать реалистичный план по дням с учетом времени и сил.",
+        task3: "Помогать переносить задачи, если план оказался слишком плотным.",
+        tone: "Коротко, строго, только по делу.",
+        limits: "Не загружать день слишком большим количеством задач. Не ругать за срывы. Не игнорировать отдых."
+      },
+      speech: {
+        agentName: "Мастер выступлений",
+        domain: "презентации, мастер-классы и публичная речь",
+        goal: "Помогать мне быстро готовить выступления, которые понятны аудитории и дают практический результат.",
+        task1: "Собирать структуру выступления: начало, основная часть, практика, финал.",
+        task2: "Предлагать примеры, вопросы залу и короткие упражнения.",
+        task3: "Сокращать материал до нужного времени без потери смысла.",
+        tone: "Вдохновляюще, мягко, с поддержкой.",
+        limits: "Не делать выступление сухим. Не перегружать теорией. Не писать длинные абзацы для слайдов."
+      },
+      study: {
+        agentName: "Учебный наставник",
+        domain: "обучение, новые навыки и саморазвитие",
+        goal: "Помогать мне разбираться в сложных темах простыми шагами и закреплять знания практикой.",
+        task1: "Объяснять тему простым языком с примерами.",
+        task2: "Давать короткие упражнения после объяснения.",
+        task3: "Проверять мое понимание вопросами и мягко исправлять ошибки.",
+        tone: "Дружелюбно, ясно, без давления.",
+        limits: "Не переходить к сложным словам без объяснения. Не давать слишком много теории за раз. Не высмеивать ошибки."
+      }
+    };
+
+    function valueOf(name) {
+      const field = form.elements[name];
+      return field ? field.value.trim() : "";
+    }
+
+    function selectedTone() {
+      const checked = form.querySelector("input[name='tone']:checked");
+      return checked ? checked.value : "Дружелюбно и понятно.";
+    }
+
+    function taskList() {
+      return [valueOf("task1"), valueOf("task2"), valueOf("task3")]
+        .filter(Boolean)
+        .map((task, index) => `${index + 1}. ${task}`)
+        .join("\n");
+    }
+
+    function buildPrompt() {
+      const name = valueOf("agentName") || "Личный AI-агент";
+      const domain = valueOf("domain") || "мои задачи";
+      const goal = valueOf("goal") || "Помогать мне получать ясные и полезные ответы.";
+      const tasks = taskList() || "1. Уточнять задачу.\n2. Предлагать варианты.\n3. Давать понятный следующий шаг.";
+      const tone = selectedTone();
+      const limits = valueOf("limits") || "Не придумывать факты. Не давать советы вне контекста.";
+
+      return `Ты мой личный AI-агент по теме: ${domain}.
+
+Имя агента: ${name}.
+
+Главная цель:
+${goal}
+
+Твои основные задачи:
+${tasks}
+
+Как работать:
+1. Сначала коротко уточни недостающую информацию, если без нее нельзя дать хороший ответ.
+2. Если данных достаточно, сразу переходи к решению.
+3. Давай практичный результат, который можно применить сегодня.
+4. В конце добавляй следующий шаг, чтобы мне было понятно, что делать дальше.
+
+Формат ответа:
+- короткий вывод;
+- подробности по делу;
+- список конкретных шагов;
+- вопрос, если нужно уточнение.
+
+Стиль общения:
+${tone}
+
+Ограничения:
+${limits}
+
+Начни работу с вопроса: "С какой задачей разбираемся сейчас?"`;
+    }
+
+    function updatePreview() {
+      const prompt = buildPrompt();
+      const name = valueOf("agentName") || "Личный AI-агент";
+      const domain = valueOf("domain") || "мои задачи";
+      const initials = name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+
+      output.textContent = prompt;
+      previewName.textContent = name;
+      previewDomain.textContent = domain;
+      previewTag.textContent = initials || "AI";
+      lineCount.textContent = `${prompt.split("\n").length} строк`;
+      charCount.textContent = `${prompt.length} знаков`;
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("is-visible");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+      }, 1800);
+    }
+
+    async function copyPrompt() {
+      const text = output.textContent.trim();
+
+      if (!text) {
+        showToast("Сначала собери агента");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Промпт скопирован");
+      } catch (error) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(output);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        showToast("Текст выделен для копирования");
+      }
+    }
+
+    function applyPreset(key) {
+      const data = presetData[key];
+      if (!data) return;
+
+      Object.entries(data).forEach(([name, value]) => {
+        if (name === "tone") {
+          const tone = form.querySelector(`input[name="tone"][value="${value}"]`);
+          if (tone) tone.checked = true;
+          return;
+        }
+
+        if (form.elements[name]) {
+          form.elements[name].value = value;
+        }
+      });
+
+      updatePreview();
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      updatePreview();
+      showToast("Агент собран");
+    });
+
+    form.addEventListener("input", updatePreview);
+    copyButton.addEventListener("click", copyPrompt);
+
+    clearButton.addEventListener("click", () => {
+      form.reset();
+      ["agentName", "domain", "goal", "task1", "task2", "task3", "limits"].forEach((name) => {
+        if (form.elements[name]) {
+          form.elements[name].value = "";
+        }
+      });
+      updatePreview();
+    });
+
+    presets.forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+
+    updatePreview();
+  </script>
+</body>
+</html>
